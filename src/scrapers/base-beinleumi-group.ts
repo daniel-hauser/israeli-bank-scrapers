@@ -258,7 +258,11 @@ async function getAccountTransactions(page: Page) {
 }
 
 async function getCurrentBalance(page: Page) {
-  const balanceStr = await page.$eval(CURRENT_BALANCE, (option) => {
+  const balanceElement = await page.$(CURRENT_BALANCE);
+  if (!balanceElement) {
+    return undefined;
+  }
+  const balanceStr = await balanceElement.evaluate((option) => {
     return (option as HTMLElement).innerText;
   });
   return getAmountData(balanceStr);
@@ -337,8 +341,9 @@ class BeinleumiGroupBaseScraper extends BaseScraperWithBrowser<ScraperSpecificCr
 
   async fetchData() {
     const defaultStartMoment = moment().subtract(1, 'years').add(1, 'day');
+    const startMomentLimit = moment({ year: 1600 });
     const startDate = this.options.startDate || defaultStartMoment.toDate();
-    const startMoment = moment.max(defaultStartMoment, moment(startDate));
+    const startMoment = moment.max(startMomentLimit, moment(startDate));
 
     await this.navigateTo(this.TRANSACTIONS_URL);
 
